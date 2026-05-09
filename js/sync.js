@@ -32,7 +32,16 @@ function initGis() {
   gTokenClient = google.accounts.oauth2.initTokenClient({
     client_id: G_CONFIG.CLIENT_ID,
     scope: G_CONFIG.SCOPES,
-    callback: '', // defined later
+    callback: async (resp) => {
+      if (resp.error !== undefined) { 
+        console.error('Auth Error:', resp);
+        showToast('Auth Failed: ' + resp.error, 'error');
+        throw (resp); 
+      }
+      window.syncState.connected = true;
+      showToast('Connected to Google Drive');
+      saveToDrive(); // Auto sync on connect
+    },
   });
   gGisInited = true;
   maybeEnableButtons();
@@ -40,19 +49,14 @@ function initGis() {
 
 function maybeEnableButtons() {
   if (gApiInited && gGisInited) {
-    console.log('Google Drive Sync Ready');
+    console.log('Google Drive Sync Ready and Loaded');
   }
 }
 
 // Connect/Auth
 window.connectGoogleDrive = function () {
-  gTokenClient.callback = async (resp) => {
-    if (resp.error !== undefined) { throw (resp); }
-    window.syncState.connected = true;
-    showToast('Connected to Google Drive');
-    saveToDrive(); // Auto sync on connect
-  };
-
+  if (!gGisInited) return showToast('Google Sync still loading...', 'warning');
+  
   if (gapi.client.getToken() === null) {
     gTokenClient.requestAccessToken({ prompt: 'consent' });
   } else {
