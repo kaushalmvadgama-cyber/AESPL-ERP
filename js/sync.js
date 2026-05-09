@@ -3,7 +3,6 @@
 const G_CONFIG = {
   CLIENT_ID: '557642767931-pddukcgif1gusf56ea9fqu9dv39mbtrk.apps.googleusercontent.com',
   API_KEY: 'AIzaSyAx1hCjlj9a3NBrIuwjL_9WsV6GJqSJuXs',
-  DISCOVERY_DOC: 'https://www.googleapis.com/discovery/v1/rest?api=drive&version=v3',
   SCOPES: 'https://www.googleapis.com/auth/drive.file'
 };
 
@@ -22,7 +21,6 @@ async function initGoogle() {
   await new Promise(resolve => gapi.load('client', resolve));
   await gapi.client.init({
     apiKey: G_CONFIG.API_KEY,
-    discoveryDocs: [G_CONFIG.DISCOVERY_DOC],
   });
   gApiInited = true;
   maybeEnableButtons();
@@ -38,12 +36,12 @@ function initGis() {
         showToast('Auth Failed: ' + resp.error, 'error');
         throw (resp); 
       }
-      // CRITICAL: Set the token for GAPI client
+      // Set token for any subsequent fetch calls
       gapi.client.setToken(resp);
       
       window.syncState.connected = true;
       showToast('Connected to Google Drive');
-      saveToDrive(); // Auto sync on connect
+      saveToDrive();
     },
   });
   gGisInited = true;
@@ -52,14 +50,13 @@ function initGis() {
 
 function maybeEnableButtons() {
   if (gApiInited && gGisInited) {
-    console.log('Google Drive Sync Ready and Loaded');
+    console.log('Google Drive Sync Ready');
   }
 }
 
 // Connect/Auth
 window.connectGoogleDrive = function () {
   if (!gGisInited) return showToast('Google Sync still loading...', 'warning');
-  
   if (gapi.client.getToken() === null) {
     gTokenClient.requestAccessToken({ prompt: 'consent' });
   } else {
@@ -69,41 +66,41 @@ window.connectGoogleDrive = function () {
 
 // Sync Logic: Save DB to Drive
 window.saveToDrive = async function () {
-  if (!window.syncState.connected) return showToast('Connect to Google Drive first', 'warning');
+  if (!window.syncState.connected) return;
 
   window.syncState.isSyncing = true;
   showToast('Syncing to Cloud...', 'info');
 
   try {
-    // Correct way to export using dexie-export-import
+    const token = gapi.client.getToken().access_token;
     const blob = await DexieExportImport.exportDB(db);
     
-    // Search for existing file
-    const response = await gapi.client.drive.files.list({
-      q: "name = 'aespl_erp_backup.json' and trashed = false",
-      fields: 'files(id, name)'
+    // Search for existing file using DIRECT FETCH
+    const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='aespl_erp_backup.json' and trashed=false&fields=files(id, name)`, {
+      headers: { 'Authorization': `Bearer ${token}` }
     });
+    const searchData = await searchRes.json();
+    const fileId = searchData.files && searchData.files[0]?.id;
 
-    const fileId = response.result.files[0]?.id;
     const metadata = { name: 'aespl_erp_backup.json', mimeType: 'application/json' };
 
     if (fileId) {
-      // Update existing content
+      // Update existing
       const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
         method: 'PATCH',
-        headers: { 'Authorization': `Bearer ${gapi.client.getToken().access_token}` },
+        headers: { 'Authorization': `Bearer ${token}` },
         body: blob
       });
       if (!res.ok) throw new Error('Upload failed');
     } else {
-      // Create new file with metadata (Multipart)
+      // Create new (Multipart)
       const form = new FormData();
       form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
       form.append('file', blob);
 
       const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${gapi.client.getToken().access_token}` },
+        headers: { 'Authorization': `Bearer ${token}` },
         body: form
       });
       if (!res.ok) throw new Error('Create failed');
@@ -126,25 +123,27 @@ window.loadFromDrive = async function () {
   if (!confirm('This will overwrite your local data with the Cloud backup. Continue?')) return;
 
   try {
-    const response = await gapi.client.drive.files.list({
-      q: "name = 'aespl_erp_backup.json' and trashed = false",
-      fields: 'files(id, name)'
+    const token = gapi.client.getToken().access_token;
+    
+    // Search for existing file using DIRECT FETCH
+    const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='aespl_erp_backup.json' and trashed=false&fields=files(id, name)`, {
+      headers: { 'Authorization': `Bearer ${token}` }
     });
-
-    const fileId = response.result.files[0]?.id;
+    const searchData = await searchRes.json();
+    const fileId = searchData.files && searchData.files[0]?.id;
+    
     if (!fileId) return showToast('No backup found in Google Drive', 'warning');
 
     const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-      headers: { 'Authorization': `Bearer ${gapi.client.getToken().access_token}` }
+      headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!res.ok) throw new Error('Download failed');
     const blob = await res.blob();
-
-    // Correct way to import using dexie-export-import
+    
     await db.delete();
     await db.open();
     await DexieExportImport.importDB(db, blob, { overwriteValues: true });
-
+    
     showToast('Data restored from Cloud. Reloading...');
     setTimeout(() => location.reload(), 1500);
   } catch (err) {
