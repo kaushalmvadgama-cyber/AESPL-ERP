@@ -1,7 +1,7 @@
 /* ===== Google Drive Sync Module ===== */
 
 const G_CONFIG = {
-  CLIENT_ID: 'YOUR_CLIENT_ID_HERE',
+  CLIENT_ID: '557642767931-pddukcgif1gusf56ea9fqu9dv39mbtrk.apps.googleusercontent.com',
   API_KEY: 'AIzaSyAx1hCjlj9a3NBrIuwjL_9WsV6GJqSJuXs',
   DISCOVERY_DOC: 'https://www.googleapis.com/discovery/v1/rest?api=drive&version=v3',
   SCOPES: 'https://www.googleapis.com/auth/drive.file'
