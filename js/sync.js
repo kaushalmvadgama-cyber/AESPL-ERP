@@ -3,7 +3,7 @@
 const G_CONFIG = {
   CLIENT_ID: 'YOUR_CLIENT_ID_HERE',
   API_KEY: 'AIzaSyAx1hCjlj9a3NBrIuwjL_9WsV6GJqSJuXs',
-  DISCOVERY_DOC: 'https://www.googleapis.com/discovery/v1/rest?version=v3',
+  DISCOVERY_DOC: 'https://www.googleapis.com/discovery/v1/rest?api=drive&version=v3',
   SCOPES: 'https://www.googleapis.com/auth/drive.file'
 };
 
