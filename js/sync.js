@@ -38,6 +38,9 @@ function initGis() {
         showToast('Auth Failed: ' + resp.error, 'error');
         throw (resp); 
       }
+      // CRITICAL: Set the token for GAPI client
+      gapi.client.setToken(resp);
+      
       window.syncState.connected = true;
       showToast('Connected to Google Drive');
       saveToDrive(); // Auto sync on connect
