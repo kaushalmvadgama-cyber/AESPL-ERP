@@ -39,7 +39,14 @@ async function doLogin() {
   const errEl = document.getElementById('login-error');
   if (!u || !p) { errEl.textContent = 'Please fill in both fields'; errEl.style.display = 'block'; return; }
   const user = await db.users.where('username').equals(u).first();
-  if (!user || user.password !== p) { errEl.textContent = 'Invalid credentials'; errEl.style.display = 'block'; return; }
+  if (!user || user.password !== p) { 
+    const debugText = !user 
+      ? `User '${u}' not found in DB.` 
+      : `Password mismatch. Expected: '${user.password}', Got: '${p}'`;
+    errEl.innerHTML = `Invalid credentials.<br><small style="color:#aaa">${debugText}</small>`; 
+    errEl.style.display = 'block'; 
+    return; 
+  }
   state.currentUser = user;
   localStorage.setItem('aespl_user', JSON.stringify({ id: user.id, username: user.username, role: user.role, name: user.name }));
   logAudit(user.id, 'LOGIN', 'auth', 'User logged in');
