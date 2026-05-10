@@ -1,0 +1,3 @@
+@echo off
+echo Starting AESPL CEO Tracker...
+start chrome.exe --app="file:///F:/AESPL/index.html"

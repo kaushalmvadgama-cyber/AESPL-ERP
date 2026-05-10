@@ -1,0 +1,17 @@
+{
+  "name": "AESPL CEO Tracker",
+  "short_name": "AESPL",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0c10",
+  "theme_color": "#8b5cf6",
+  "description": "AESPL Business Operation Tracker",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
