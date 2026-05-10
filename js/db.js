@@ -24,7 +24,7 @@ async function seedDefaults() {
   const userCount = await db.users.count();
   if (userCount === 0) {
     await db.users.bulkAdd([
-      { username: 'CEO', password: 'KAUSHALMVADGAMA', role: 'ceo', name: 'CEO Admin', createdAt: new Date().toISOString() },
+      { username: 'ceo', password: 'KAUSHALMVADGAMA', role: 'ceo', name: 'CEO Admin', createdAt: new Date().toISOString() },
       { username: 'sales', password: 'sales123', role: 'sales', name: 'Sales Manager', createdAt: new Date().toISOString() },
       { username: 'purchase', password: 'purchase123', role: 'purchase', name: 'Purchase Manager', createdAt: new Date().toISOString() },
       { username: 'finance', password: 'finance123', role: 'finance', name: 'Finance Manager', createdAt: new Date().toISOString() },
