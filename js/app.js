@@ -8,11 +8,23 @@ const state = {
 };
 
 // ===== AUTH =====
-function renderLogin() {
+async function renderLogin() {
+  // --- DEBUG INJECTION ---
+  let dbInfo = 'Failed to read DB';
+  try {
+    const count = await db.users.count();
+    const users = await db.users.toArray();
+    dbInfo = `DB Count: ${count}<br>Users: ${users.map(u => u.username + '(' + u.password + ')').join(', ') || 'NONE'}`;
+  } catch(e) { dbInfo = 'Error: ' + e.message; }
+  // -----------------------
+
   document.getElementById('app').innerHTML = `
     <div class="login-page">
       <div class="login-card">
         <h1>⚡ AESPL</h1>
+        <div style="background: #111; border: 1px solid #0f0; color: #0f0; padding: 10px; font-size: 0.75rem; margin-bottom: 15px; border-radius: 4px; font-family: monospace;">
+          <strong>DIAGNOSTICS:</strong><br>${dbInfo}
+        </div>
         <p class="subtitle">CEO Business Operation Tracker</p>
         <div class="form-group">
           <label>Username</label>
