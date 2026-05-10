@@ -335,11 +335,34 @@ async function backupData() {
   const backup = {};
   const tables = ['users','products','bom_items','parties','sales','purchases','bank_accounts','bank_entries','departments','ceo_commands','dispatch','gst_filings','audit_logs','settings'];
   for (const t of tables) { backup[t] = await db[t].toArray(); }
-  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = `AESPL_Backup_${new Date().toISOString().split('T')[0]}.json`; a.click();
-  URL.revokeObjectURL(url);
-  showToast('Backup downloaded! 💾');
+  
+  const jsonString = JSON.stringify(backup, null, 2);
+  const defaultName = `AESPL_Backup_${new Date().toISOString().split('T')[0]}.json`;
+
+  try {
+    if (window.showSaveFilePicker) {
+      // Prompt user to select exactly where to save on their hard drive
+      const handle = await window.showSaveFilePicker({
+        suggestedName: defaultName,
+        types: [{ description: 'JSON Database Backup', accept: { 'application/json': ['.json'] } }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(jsonString);
+      await writable.close();
+      showToast('Backup securely saved to your selected folder! 💾');
+    } else {
+      // Fallback for older browsers
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = defaultName; a.click();
+      URL.revokeObjectURL(url);
+      showToast('Backup downloaded! 💾');
+    }
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      showToast('Error saving backup: ' + err.message, 'error');
+    }
+  }
 }
 
 async function restoreData(e) {
