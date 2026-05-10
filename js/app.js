@@ -41,10 +41,7 @@ async function doLogin() {
   const user = allUsers.find(dbUser => dbUser.username.toLowerCase() === u);
   
   if (!user || user.password !== p) { 
-    const debugText = !user 
-      ? `User '${u}' not found in DB.` 
-      : `Password mismatch. Expected: '${user.password}', Got: '${p}'`;
-    errEl.innerHTML = `Invalid credentials.<br><small style="color:#aaa">${debugText}</small>`; 
+    errEl.textContent = 'Invalid credentials'; 
     errEl.style.display = 'block'; 
     return; 
   }
