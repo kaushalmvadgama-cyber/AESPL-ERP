@@ -38,7 +38,9 @@ async function doLogin() {
   const p = document.getElementById('login-pass').value;
   const errEl = document.getElementById('login-error');
   if (!u || !p) { errEl.textContent = 'Please fill in both fields'; errEl.style.display = 'block'; return; }
-  const user = await db.users.where('username').equals(u).first();
+  const allUsers = await db.users.toArray();
+  const user = allUsers.find(dbUser => dbUser.username.toLowerCase() === u);
+  
   if (!user || user.password !== p) { 
     const debugText = !user 
       ? `User '${u}' not found in DB.` 
