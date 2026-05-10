@@ -31,14 +31,14 @@ function initGis() {
     client_id: G_CONFIG.CLIENT_ID,
     scope: G_CONFIG.SCOPES,
     callback: async (resp) => {
-      if (resp.error !== undefined) { 
+      if (resp.error !== undefined) {
         console.error('Auth Error:', resp);
         showToast('Auth Failed: ' + resp.error, 'error');
-        throw (resp); 
+        throw (resp);
       }
       // Set token for any subsequent fetch calls
       gapi.client.setToken(resp);
-      
+
       window.syncState.connected = true;
       showToast('Connected to Google Drive');
       saveToDrive();
@@ -74,7 +74,7 @@ window.saveToDrive = async function () {
   try {
     const token = gapi.client.getToken().access_token;
     const blob = await DexieExportImport.exportDB(db);
-    
+
     // Search for existing file using DIRECT FETCH
     const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='aespl_erp_backup.json' and trashed=false&fields=files(id, name)`, {
       headers: { 'Authorization': `Bearer ${token}` }
@@ -124,14 +124,14 @@ window.loadFromDrive = async function () {
 
   try {
     const token = gapi.client.getToken().access_token;
-    
+
     // Search for existing file using DIRECT FETCH
     const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='aespl_erp_backup.json' and trashed=false&fields=files(id, name)`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     const searchData = await searchRes.json();
     const fileId = searchData.files && searchData.files[0]?.id;
-    
+
     if (!fileId) return showToast('No backup found in Google Drive', 'warning');
 
     const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
@@ -139,11 +139,11 @@ window.loadFromDrive = async function () {
     });
     if (!res.ok) throw new Error('Download failed');
     const blob = await res.blob();
-    
+
     await db.delete();
     await db.open();
     await DexieExportImport.importDB(db, blob, { overwriteValues: true });
-    
+
     showToast('Data restored from Cloud. Reloading...');
     setTimeout(() => location.reload(), 1500);
   } catch (err) {
